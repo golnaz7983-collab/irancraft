@@ -48,13 +48,14 @@ $("orderForm")?.addEventListener("submit",async e=>{
  const {data,error}=await db.from("irancraft_orders").insert({
   order_type:$("orderType").value,service_id:selectedService.id,price,
   payment_amount:price,customer_name:name,customer_phone:phone,
+  admin_note:selectedService.auto_reply||"",
   username:$("orderUsername").value.trim(),server_name:$("serverName").value.trim()||null,
   server_address:$("serverAddress").value.trim()||null,description:$("description").value.trim()
  }).select().single();
  const r=$("orderResult");r.classList.remove("hidden");
  if(error){r.textContent="خطا در ثبت سفارش: "+error.message;return}
  if(price>0)setCoins(coins()-price);
- r.innerHTML="✅ سفارش ثبت شد.<br>کد تیکت: <b>"+data.ticket_code+"</b><br><small>"+(price>0?"هزینه از ایران‌کوین کم شد. ":"")+"کد را نگه دار و از بخش پیگیری استفاده کن.</small>";
+ r.innerHTML="✅ سفارش ثبت شد.<br>کد تیکت: <b>"+data.ticket_code+"</b><br><small>"+(price>0?"هزینه از ایران‌کوین کم شد. ":"")+(selectedService?.auto_reply?("<br>🤖 پاسخ خودکار: "+esc(selectedService.auto_reply)):"")+"<br>کد را نگه دار و از بخش پیگیری استفاده کن.</small>";
  e.target.reset();selectedService=null;
 });
 
@@ -132,10 +133,15 @@ $("couponAdminForm")?.addEventListener("submit",async e=>{
  if(error){alert("کد ساخته نشد: "+error.message);return}e.target.reset();await loadCouponsAdmin();alert("کد ایران‌کوین ساخته شد.");
 });
 $("couponForm")?.addEventListener("submit",async e=>{
- e.preventDefault();const code=$("couponCode").value.trim().toUpperCase(),r=$("couponResult");r.classList.remove("hidden");
+ e.preventDefault();const code=$("couponCode").value.trim().toUpperCase(),phone=$("couponPhone").value.trim(),r=$("couponResult");
+ if(!phone){r.textContent="شماره تماس را وارد کن تا هر کد فقط یک‌بار برای هر نفر قابل استفاده باشد.";return}r.classList.remove("hidden");
  const {data,error}=await db.from("irancraft_coupons").select("*").eq("code",code).eq("active",true).maybeSingle();
  if(error||!data){r.textContent="کد معتبر نیست.";return}
- setCoins(coins()+Number(data.amount));r.textContent="✅ "+Number(data.amount)+" ایران‌کوین اضافه شد. موجودی: "+coins();e.target.reset();
+ const {data:used}=await db.from("irancraft_coupon_redemptions").select("id").eq("coupon_id",data.id).eq("customer_phone",phone).maybeSingle();
+ if(used){r.textContent="⛔ این کد را قبلاً استفاده کرده‌ای.";return}
+ const {error:redeemError}=await db.from("irancraft_coupon_redemptions").insert({coupon_id:data.id,customer_phone:phone});
+ if(redeemError){r.textContent=redeemError.code==="23505"?"⛔ این کد را قبلاً استفاده کرده‌ای.":"خطا در ثبت استفاده از کد.";return}
+ setCoins(coins()+Number(data.amount));localStorage.setItem("irancraft_coupon_phone",phone);r.textContent="✅ "+Number(data.amount)+" ایران‌کوین اضافه شد. موجودی: "+coins();e.target.reset();
 });
 async function loadServicesAdmin(){
  const {data}=await db.from("irancraft_services").select("*").order("created_at",{ascending:true});
@@ -145,7 +151,7 @@ async function loadServicesAdmin(){
 }
 $("serviceAdminForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const paid=$("serviceAdminPaid").checked,price=paid?Number($("serviceAdminPrice").value):0;
- const {error}=await db.from("irancraft_services").insert({name:$("serviceAdminName").value.trim(),description:$("serviceAdminDesc").value.trim(),price,active:true});
+ const {error}=await db.from("irancraft_services").insert({name:$("serviceAdminName").value.trim(),description:$("serviceAdminDesc").value.trim(),auto_reply:$("serviceAdminReply").value.trim(),price,active:true});
  if(error){alert("سرویس ساخته نشد: "+error.message);return}e.target.reset();$("serviceAdminPrice").value=0;await loadServicesAdmin();alert("سرویس اضافه شد.");
 });
 document.querySelectorAll(".admin-tab").forEach(b=>b.onclick=async()=>{
