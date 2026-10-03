@@ -1,10 +1,10 @@
 const SUPABASE_URL="https://qqwifsgnzweslkcyuqmg.supabase.co";
 const SUPABASE_KEY="sb_publishable_AI6rSMSOAag61TCJzapLbg_frex6ks9";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const CRED={user:"irancraft",pass:"iran1405"};const $=id=>document.getElementById(id);
+const CRED={user:"irancraft"};const $=id=>document.getElementById(id);
 const statusNames={pending:"در انتظار بررسی",approved:"تأیید شد",in_progress:"در حال انجام",ready:"آماده تحویل",rejected:"رد شد"};
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-function auth(){if(sessionStorage.getItem("irancraft_login")==="1"){$("loginGate")?.classList.add("hidden");($("site")||$("adminSite"))?.classList.remove("hidden");if(document.body.dataset.page==="admin")loadAdmin();return}$("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user&&$("loginPass").value===CRED.pass){sessionStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری یا رمز عبور اشتباه است."})}
+function auth(){if(sessionStorage.getItem("irancraft_login")==="1"){$("loginGate")?.classList.add("hidden");($("site")||$("adminSite"))?.classList.remove("hidden");if(document.body.dataset.page==="admin")loadAdmin();return}$("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user){sessionStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری اشتباه است."})}
 $("logoutBtn")?.addEventListener("click",()=>{sessionStorage.removeItem("irancraft_login");location.reload()});
 function openOrder(type){$("orderSection").classList.remove("hidden");$("orderType").value=type;const h=type==="herobrine";$("formTitle").textContent=h?"سفارش اضافه کردن هیروبراین":"سفارش ساخت ماد برای سرور";$("serverFields").style.display=h?"grid":"none";$("serverName").required=h;$("serverAddress").required=h;$("orderSection").scrollIntoView({behavior:"smooth"})}
 document.querySelectorAll(".service-open").forEach(b=>b.onclick=()=>openOrder(b.dataset.service));$("closeForm")?.addEventListener("click",()=>$("orderSection").classList.add("hidden"));
