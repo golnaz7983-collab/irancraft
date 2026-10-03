@@ -82,7 +82,7 @@ let adminType="herobrine",orders=[];
 async function loadAdmin(){
  const {data,error}=await db.from("irancraft_orders").select("*,irancraft_services(name)").order("created_at",{ascending:false});
  if(error){$("orders").innerHTML="<div class='empty'>خطا در دریافت سفارش‌ها.</div>";return}
- const seen=new Map();(data||[]).forEach(o=>{if(!seen.has(o.id))seen.set(o.id,o)});orders=[...seen.values()];
+ const seen=new Map();(data||[]).forEach(o=>{const key=o.ticket_code||o.id;if(!seen.has(key))seen.set(key,o)});orders=[...seen.values()];
  $("countHero").textContent=orders.filter(x=>x.order_type==="herobrine").length;
  $("countMod").textContent=orders.filter(x=>x.order_type==="mod"||x.order_type==="service").length;
  if(adminType==="manage"){await loadManage();return}
@@ -123,8 +123,9 @@ $("adForm")?.addEventListener("submit",async e=>{
 });
 async function loadCouponsAdmin(){
  const {data}=await db.from("irancraft_coupons").select("*").order("created_at",{ascending:false});
- $("couponsList").innerHTML=(data||[]).map(c=>"<div class='manage-row'><div><b>"+esc(c.code)+"</b><small>"+Number(c.amount)+" ایران‌کوین · "+esc(c.occasion||"بدون مناسبت")+"</small></div><button class='btn danger delete-coupon' data-id='"+c.id+"'>🗑 حذف</button></div>").join("")||"<div class='empty'>کدی ثبت نشده.</div>";
- document.querySelectorAll(".delete-coupon").forEach(b=>b.onclick=async()=>{if(!confirm("کد حذف شود؟"))return;await db.from("irancraft_coupons").delete().eq("id",b.dataset.id);loadCouponsAdmin()});
+ $("couponsList").innerHTML=(data||[]).map(c=>"<div class='manage-row'><div><b>"+esc(c.code)+"</b><small>"+Number(c.amount)+" ایران‌کوین · "+esc(c.occasion||"بدون مناسبت")+"</small></div><div class='edit-actions'><button class='btn ghost edit-coupon' data-id='"+c.id+"'>✏️ ویرایش</button><button class='btn danger delete-coupon' data-id='"+c.id+"'>🗑 حذف</button></div></div>").join("")||"<div class='empty'>کدی ثبت نشده.</div>";
+ document.querySelectorAll(".edit-coupon").forEach(b=>b.onclick=async()=>{const c=data.find(x=>x.id===b.dataset.id);if(!c)return;const amount=prompt("مبلغ ایران‌کوین:",c.amount);if(amount===null)return;const occasion=prompt("مناسبت:",c.occasion||"");if(occasion===null)return;const code=prompt("کد:",c.code);if(code===null)return;const {error}=await db.from("irancraft_coupons").update({code:code.trim().toUpperCase(),amount:Number(amount),occasion:occasion.trim()}).eq("id",c.id);if(error){alert("ویرایش نشد: "+error.message);return}loadCouponsAdmin()});
+document.querySelectorAll(".delete-coupon").forEach(b=>b.onclick=async()=>{if(!confirm("کد حذف شود؟"))return;await db.from("irancraft_coupons").delete().eq("id",b.dataset.id);loadCouponsAdmin()});
 }
 $("couponAdminForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const {error}=await db.from("irancraft_coupons").insert({code:$("couponAdminCode").value.trim().toUpperCase(),amount:Number($("couponAdminAmount").value),occasion:$("couponAdminOccasion").value.trim(),active:true});
