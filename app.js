@@ -5,6 +5,33 @@ const CRED={user:"irancraft"};const $=id=>document.getElementById(id);
 const statusNames={pending:"در انتظار بررسی",approved:"تأیید شد",in_progress:"در حال انجام",ready:"آماده تحویل",rejected:"رد شد"};
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const coins=()=>Number(localStorage.getItem("irancraft_coins")||0);
+const accountEmail=u=>String(u).trim().toLowerCase()+"@users.irancraft.local";
+async function initAccountAuth(){
+ const {data}=await db.auth.getSession(); renderAccount(data?.session?.user||null);
+ $("registerForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();const r=$("registerResult"),username=$("registerUsername").value.trim(),p=$("registerPassword").value,p2=$("registerPassword2").value;r.classList.remove("hidden");
+  if(p!==p2){r.textContent="رمزها یکسان نیستند.";return}
+  const response=await fetch(SUPABASE_URL+"/functions/v1/irancraft-register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password:p})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){r.textContent="❌ "+(data.error||"ثبت‌نام ناموفق بود.");return}
+  const login=await db.auth.signInWithPassword({email:accountEmail(username),password:p});
+  if(login.error){r.textContent="ثبت شد؛ ورود خودکار انجام نشد. از بخش ورود وارد شو.";return}
+  r.textContent="✅ ثبت‌نام و ورود انجام شد.";renderAccount(login.data.user);e.target.reset();
+ });
+ $("loginUserForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();const r=$("loginResult");r.classList.remove("hidden");
+  const {data,error}=await db.auth.signInWithPassword({email:accountEmail($("loginUsername").value),password:$("loginPassword").value});
+  if(error){r.textContent="❌ نام کاربری یا رمز عبور اشتباه است.";return}
+  r.textContent="✅ وارد شدی.";renderAccount(data.user);e.target.reset();
+ });
+ $("accountLogout")?.addEventListener("click",async()=>{await db.auth.signOut();renderAccount(null)});
+}
+function renderAccount(user){
+ const guest=$("accountGuest"),box=$("accountUser");if(!guest||!box)return;
+ if(user){guest.classList.add("hidden");box.classList.remove("hidden");const name=user.user_metadata?.username||user.email?.split("@")[0]||"کاربر";$("accountWelcome").textContent="سلام "+name+" 👋";localStorage.setItem("irancraft_profile",JSON.stringify({name}));}
+ else{guest.classList.remove("hidden");box.classList.add("hidden")}
+}
+
 function setCoins(n){localStorage.setItem("irancraft_coins",String(Math.max(0,Math.floor(n))));if($("coinBalance"))$("coinBalance").textContent=Math.max(0,Math.floor(n))}
 function auth(){
  if(document.body.dataset.page!=="admin"){loadShop();return}
@@ -16,6 +43,7 @@ $("logoutBtn")?.addEventListener("click",()=>{sessionStorage.removeItem("irancra
 let services=[],selectedService=null;
 async function loadShop(){
 
+ await initAccountAuth();
  setCoins(coins());
  const {data}=await db.from("irancraft_services").select("*").eq("active",true).order("created_at",{ascending:true});
  services=data||[];renderServices();await renderAds();
