@@ -8,10 +8,10 @@ const coins=()=>Number(localStorage.getItem("irancraft_coins")||0);
 function setCoins(n){localStorage.setItem("irancraft_coins",String(Math.max(0,Math.floor(n))));if($("coinBalance"))$("coinBalance").textContent=Math.max(0,Math.floor(n))}
 function auth(){
  if(document.body.dataset.page!=="admin"){loadShop();return}
- if(sessionStorage.getItem("irancraft_login")==="1"){$("loginGate")?.classList.add("hidden");$("adminSite")?.classList.remove("hidden");loadAdmin();return}
- $("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user){sessionStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری اشتباه است."});
+ if(localStorage.getItem("irancraft_login")==="1"){$("loginGate")?.classList.add("hidden");$("adminSite")?.classList.remove("hidden");loadAdmin();return}
+ $("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user){localStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری اشتباه است."});
 }
-$("logoutBtn")?.addEventListener("click",()=>{sessionStorage.removeItem("irancraft_login");location.reload()});
+$("logoutBtn")?.addEventListener("click",()=>{localStorage.removeItem("irancraft_login");location.reload()});
 
 let services=[],selectedService=null;
 async function loadShop(){
