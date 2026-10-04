@@ -1,7 +1,7 @@
 const SUPABASE_URL="https://qqwifsgnzweslkcyuqmg.supabase.co";
 const SUPABASE_KEY="sb_publishable_AI6rSMSOAag61TCJzapLbg_frex6ks9";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const CRED={user:"irancraft"};const $=id=>document.getElementById(id);
+const CRED={user:"irancraft",pass:String.fromCharCode(105,114,97,110,49,52,48,53)};const $=id=>document.getElementById(id);
 const statusNames={pending:"در انتظار بررسی",approved:"تأیید شد",in_progress:"در حال انجام",ready:"آماده تحویل",rejected:"رد شد"};
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const coins=()=>Number(localStorage.getItem("irancraft_coins")||0);
@@ -9,10 +9,15 @@ function setCoins(n){localStorage.setItem("irancraft_coins",String(Math.max(0,Ma
 function auth(){
  if(document.body.dataset.page!=="admin"){loadShop();return}
  if(localStorage.getItem("irancraft_login")==="1"){$("loginGate")?.classList.add("hidden");$("adminSite")?.classList.remove("hidden");loadAdmin();return}
- $("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user){localStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری اشتباه است."});
+ $("loginForm")?.addEventListener("submit",e=>{e.preventDefault();if($("loginUser").value.trim()===CRED.user && $("loginPass").value===CRED.pass){localStorage.setItem("irancraft_login","1");location.reload()}else $("loginError").textContent="نام کاربری یا رمز عبور اشتباه است."});
 }
 $("logoutBtn")?.addEventListener("click",()=>{localStorage.removeItem("irancraft_login");location.reload()});
 
+function makeMcPassword(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";let out="";const bytes=crypto.getRandomValues(new Uint32Array(14));for(let i=0;i<bytes.length;i++)out+=chars[bytes[i]%chars.length];return out}
+function mcPasswordKey(){const server=$("mcServerSelect")?.value||"default";const username=$("mcServerUsername")?.value.trim().toLowerCase()||"guest";return "irancraft_mc_pass_"+username+"_"+server}
+function loadMcPassword(){const key=mcPasswordKey();let p=localStorage.getItem(key);if(!p){p=makeMcPassword();localStorage.setItem(key,p)}if($("mcPassword1"))$("mcPassword1").value=p;if($("mcPassword2"))$("mcPassword2").value=p}
+async function copyText(value){try{await navigator.clipboard.writeText(value)}catch(e){const ta=document.createElement("textarea");ta.value=value;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}}
+function initMinecraftPasswords(){$("mcServerSelect")?.addEventListener("change",loadMcPassword);$("mcServerUsername")?.addEventListener("blur",loadMcPassword);$("generateMcPassword")?.addEventListener("click",()=>{const p=makeMcPassword();localStorage.setItem(mcPasswordKey(),p);loadMcPassword();const r=$("mcPasswordResult");r.classList.remove("hidden");r.textContent="✅ رمز جدید ساخته شد؛ هر دو کادر یکسان هستند."});$("copyMcPassword1")?.addEventListener("click",async()=>{await copyText($("mcPassword1").value)});$("copyMcPassword2")?.addEventListener("click",async()=>{await copyText($("mcPassword2").value)});$("copyBothMcPasswords")?.addEventListener("click",async()=>{const p=$("mcPassword1").value;await copyText(p+" "+p)});loadMcPassword()}
 let services=[],selectedService=null;
 async function loadShop(){
 
