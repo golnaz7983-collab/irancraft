@@ -5,68 +5,6 @@ const CRED={user:"irancraft"};const $=id=>document.getElementById(id);
 const statusNames={pending:"در انتظار بررسی",approved:"تأیید شد",in_progress:"در حال انجام",ready:"آماده تحویل",rejected:"رد شد"};
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const coins=()=>Number(localStorage.getItem("irancraft_coins")||0);
-const accountEmail=u=>String(u).trim().toLowerCase()+"@users.irancraft.local";
-async function initAccountAuth(){
- const {data}=await db.auth.getSession(); renderAccount(data?.session?.user||null);
- $("registerForm")?.addEventListener("submit",async e=>{
-  e.preventDefault();const r=$("registerResult"),username=$("registerUsername").value.trim(),p=$("registerPassword").value,p2=$("registerPassword2").value;r.classList.remove("hidden");
-  if(p!==p2){r.textContent="رمزها یکسان نیستند.";return}
-  const response=await fetch(SUPABASE_URL+"/functions/v1/irancraft-register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password:p})});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok){r.textContent="❌ "+(data.error||"ثبت‌نام ناموفق بود.");return}
-  const login=await db.auth.signInWithPassword({email:accountEmail(username),password:p});
-  if(login.error){r.textContent="ثبت شد؛ ورود خودکار انجام نشد. از بخش ورود وارد شو.";return}
-  r.textContent="✅ ثبت‌نام و ورود انجام شد.";renderAccount(login.data.user);e.target.reset();
- });
- $("loginUserForm")?.addEventListener("submit",async e=>{
-  e.preventDefault();const r=$("loginResult");r.classList.remove("hidden");
-  const {data,error}=await db.auth.signInWithPassword({email:accountEmail($("loginUsername").value),password:$("loginPassword").value});
-  if(error){r.textContent="❌ نام کاربری یا رمز عبور اشتباه است.";return}
-  r.textContent="✅ وارد شدی.";renderAccount(data.user);e.target.reset();
- });
- $("accountLogout")?.addEventListener("click",async()=>{await db.auth.signOut();renderAccount(null)});
-}
-function makeMcPassword(){
- const chars="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
- let out="";
- const bytes=crypto.getRandomValues(new Uint32Array(14));
- for(let i=0;i<bytes.length;i++)out+=chars[bytes[i]%chars.length];
- return out;
-}
-function mcPasswordKey(){
- const server=$("mcServerSelect")?.value||"default";
- const profile=JSON.parse(localStorage.getItem("irancraft_profile")||"{}");
- return "irancraft_mc_pass_"+String(profile.name||"guest").toLowerCase()+"_"+server;
-}
-function loadMcPassword(){
- const key=mcPasswordKey();
- let p=localStorage.getItem(key);
- if(!p){p=makeMcPassword();localStorage.setItem(key,p)}
- if($("mcPassword1"))$("mcPassword1").value=p;
- if($("mcPassword2"))$("mcPassword2").value=p;
-}
-async function copyText(value){
- try{await navigator.clipboard.writeText(value);return true}catch(e){
-  const ta=document.createElement("textarea");ta.value=value;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();return true;
- }
-}
-function initMinecraftPasswords(){
- $("mcServerSelect")?.addEventListener("change",loadMcPassword);
- $("generateMcPassword")?.addEventListener("click",()=>{const p=makeMcPassword();localStorage.setItem(mcPasswordKey(),p);loadMcPassword();const r=$("mcPasswordResult");r.classList.remove("hidden");r.textContent="✅ رمز جدید ساخته شد؛ هر دو کادر یکسان هستند."});
- $("copyMcPassword1")?.addEventListener("click",async()=>{await copyText($("mcPassword1").value);const r=$("mcPasswordResult");r.classList.remove("hidden");r.textContent="📋 رمز اول کپی شد."});
- $("copyMcPassword2")?.addEventListener("click",async()=>{await copyText($("mcPassword2").value);const r=$("mcPasswordResult");r.classList.remove("hidden");r.textContent="📋 رمز دوم کپی شد."});
- $("copyBothMcPasswords")?.addEventListener("click",async()=>{const p=$("mcPassword1").value;await copyText(p+" "+p);const r=$("mcPasswordResult");r.classList.remove("hidden");r.textContent="📋 هر دو رمز برای دستور /register کپی شد."});
- loadMcPassword();
-}
-function renderAccount(user){
- const guest=$("accountGuest"),box=$("accountUser");if(!guest||!box)return;
- if(user){guest.classList.add("hidden");box.classList.remove("hidden");const name=user.user_metadata?.username||user.email?.split("@")[0]||"کاربر";$("accountWelcome").textContent="سلام "+name+" 👋";localStorage.setItem("irancraft_profile",JSON.stringify({name}));loadMcPassword();}
- else{guest.classList.remove("hidden");box.classList.add("hidden")}
-}
-
-// Minecraft server password generator
-document.addEventListener("DOMContentLoaded",()=>{initMinecraftPasswords()});
-
 function setCoins(n){localStorage.setItem("irancraft_coins",String(Math.max(0,Math.floor(n))));if($("coinBalance"))$("coinBalance").textContent=Math.max(0,Math.floor(n))}
 function auth(){
  if(document.body.dataset.page!=="admin"){loadShop();return}
