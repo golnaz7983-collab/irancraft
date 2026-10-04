@@ -161,4 +161,4 @@ document.querySelectorAll(".admin-tab").forEach(b=>b.onclick=async()=>{
  if(adminType==="manage"){$("ordersPanel").classList.add("hidden");$("managePanel").classList.remove("hidden");await loadManage()}else{await loadAdmin()}
 });
 $("refreshOrders")?.addEventListener("click",loadAdmin);
-auth();
+initMinecraftPasswords();\nauth();
