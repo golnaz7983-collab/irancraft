@@ -60,7 +60,7 @@ function initMinecraftPasswords(){
 }
 function renderAccount(user){
  const guest=$("accountGuest"),box=$("accountUser");if(!guest||!box)return;
- if(user){guest.classList.add("hidden");box.classList.remove("hidden");const name=user.user_metadata?.username||user.email?.split("@")[0]||"کاربر";$("accountWelcome").textContent="سلام "+name+" 👋";localStorage.setItem("irancraft_profile",JSON.stringify({name}));}
+ if(user){guest.classList.add("hidden");box.classList.remove("hidden");const name=user.user_metadata?.username||user.email?.split("@")[0]||"کاربر";$("accountWelcome").textContent="سلام "+name+" 👋";localStorage.setItem("irancraft_profile",JSON.stringify({name}));loadMcPassword();}
  else{guest.classList.remove("hidden");box.classList.add("hidden")}
 }
 
