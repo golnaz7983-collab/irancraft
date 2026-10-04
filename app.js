@@ -16,7 +16,6 @@ $("logoutBtn")?.addEventListener("click",()=>{sessionStorage.removeItem("irancra
 let services=[],selectedService=null;
 async function loadShop(){
 
- await initAccountAuth();
  setCoins(coins());
  const {data}=await db.from("irancraft_services").select("*").eq("active",true).order("created_at",{ascending:true});
  services=data||[];renderServices();await renderAds();
