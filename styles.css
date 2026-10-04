@@ -30,3 +30,5 @@
 .server-directory-icon{width:100px;height:100px;display:grid;place-items:center;font-size:55px;background:#07170d;border:2px solid #347b4c;border-radius:16px;flex:none}
 .server-directory-content h3{margin:0 0 8px;font-size:23px}.server-directory-content p{color:var(--muted);line-height:1.9;margin:0 0 16px}.server-directory-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.server-directory-content small{color:#71967c;line-height:1.8}
 @media(max-width:650px){.server-directory-card{flex-direction:column;text-align:center}.server-directory-actions{justify-content:center}}
+
+.account-section{padding-top:35px}.account-grid{max-width:1000px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:18px}.account-card{padding:24px}.account-card h3{margin-top:0;font-size:21px}.account-card form{display:grid;gap:12px}.account-user-head{display:flex;align-items:center;justify-content:space-between;gap:20px}.account-user-head p{color:var(--muted);line-height:1.9}@media(max-width:700px){.account-grid{grid-template-columns:1fr}.account-user-head{align-items:flex-start;flex-direction:column}}
