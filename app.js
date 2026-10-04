@@ -15,6 +15,8 @@ $("logoutBtn")?.addEventListener("click",()=>{sessionStorage.removeItem("irancra
 
 let services=[],selectedService=null;
 async function loadShop(){
+ loadIranServers();
+
  setCoins(coins());
  const {data}=await db.from("irancraft_services").select("*").eq("active",true).order("created_at",{ascending:true});
  services=data||[];renderServices();await renderAds();
@@ -160,3 +162,37 @@ document.querySelectorAll(".admin-tab").forEach(b=>b.onclick=async()=>{
 });
 $("refreshOrders")?.addEventListener("click",loadAdmin);
 auth();
+
+async function loadIranServers(){
+ const box=$("iranServersList"),updated=$("iranServersUpdated");
+ if(!box)return;
+ try{
+  const res=await fetch("https://minecraft-java-servers.com/api/v1/servers?country=Iran&per_page=100",{headers:{Accept:"application/json"}});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const payload=await res.json();
+  const servers=Array.isArray(payload)?payload:(payload.data?.servers||payload.servers||[]);
+  if(!servers.length){
+   box.innerHTML="<div class='empty'>فعلاً سرور ایرانی از منبع دریافت نشد.</div>";
+   updated.textContent="آخرین بررسی: "+new Date().toLocaleTimeString("fa-IR");
+   return;
+  }
+  box.innerHTML=servers.map((s,i)=>{
+   const online=Boolean(s.online??s.isOnline??s.status==="online");
+   const players=Number(s.players??s.playersOnline??s.onlinePlayers??0);
+   const max=Number(s.maxPlayers??s.playersMax??s.max??0);
+   const ip=s.ip||s.address||s.host||s.server_ip||"";
+   const version=s.version||s.protocol?.name||"نامشخص";
+   const modes=Array.isArray(s.types)?s.types.join(" · "):(Array.isArray(s.tags)?s.tags.join(" · "):(s.type||s.mode||""));
+   const name=s.name||s.serverName||ip||("سرور ایرانی "+(i+1));
+   const country=s.country||"Iran";
+   return "<article class='server-card'><div class='server-card-top'><div class='server-name-wrap'><span class='server-dot "+(online?"online":"offline")+"'></span><h3>"+esc(name)+"</h3></div><span class='server-status "+(online?"online":"offline")+"'>"+(online?"آنلاین":"آفلاین")+"</span></div><div class='server-ip' title='"+esc(ip)+"'>🌐 "+esc(ip||"نامشخص")+"</div><div class='server-stats'><span>👥 "+(online?players:"0")+(max?"/"+max:"")+" بازیکن</span><span>🎮 "+esc(version)+"</span></div>"+(modes?"<div class='server-modes'>"+esc(modes)+"</div>":"")+"<div class='server-actions'>"+(ip?"<button class='btn ghost copy-server-ip' data-ip='"+esc(ip)+"'>📋 کپی IP</button>":"")+"<span class='server-country'>🇮🇷 "+esc(country)+"</span></div></article>";
+  }).join("");
+  document.querySelectorAll(".copy-server-ip").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.ip);const old=b.textContent;b.textContent="✅ کپی شد";setTimeout(()=>b.textContent=old,1200)}catch(e){prompt("IP سرور:",b.dataset.ip)}});
+  updated.textContent="آخرین بروزرسانی: "+new Date().toLocaleTimeString("fa-IR")+" · "+servers.length+" سرور";
+ }catch(e){
+  box.innerHTML="<div class='empty'>دریافت فهرست سرورها ناموفق بود. دوباره روی بروزرسانی بزن.</div>";
+  updated.textContent="خطا در دریافت اطلاعات";
+ }
+}
+$("refreshIranServers")?.addEventListener("click",loadIranServers);
+setInterval(loadIranServers,60000);
